@@ -1,0 +1,14 @@
+.env
+venv
+node_modules
+__pycache__/
+*.pyc
+dist
+build
+.cache
+models/
+datasets/
+*.log
+.DS_Store
+*.db
+*.xlsx

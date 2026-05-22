@@ -1,0 +1,13 @@
+venv
+__pycache__
+*.pyc
+.env
+.git
+.gitignore
+dist
+build
+.cache
+models
+datasets
+*.log
+node_modules
