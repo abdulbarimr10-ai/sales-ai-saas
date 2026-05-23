@@ -1,14 +1,41 @@
 import os
+import redis
+import logging
 from celery import Celery
 from app.core.config import settings
 
-# Create the celery application instance using the central config setting
-redis_url = settings.REDIS_URL
+logger = logging.getLogger(__name__)
 
+# Test Redis connection
+redis_url = settings.REDIS_URL
+use_redis = False
+
+if redis_url and not redis_url.startswith("memory://"):
+    try:
+        test_client = redis.Redis.from_url(redis_url)
+        test_client.ping()
+        use_redis = True
+        logger.info("Celery: Connected to Redis successfully.")
+    except Exception as e:
+        logger.warning(f"Celery: Could not connect to Redis at {redis_url}: {e}. Falling back to inline synchronous mode.")
+
+if use_redis:
+    broker_url = redis_url
+    backend_url = redis_url
+    task_always_eager = False
+    task_eager_propagates = False
+else:
+    # Use memory broker and execute tasks synchronously inline
+    broker_url = "memory://"
+    backend_url = "memory://"
+    task_always_eager = True
+    task_eager_propagates = True
+
+# Create the celery application instance using the central config setting
 celery_app = Celery(
     'sales_ai_worker',
-    broker=redis_url,
-    backend=redis_url,
+    broker=broker_url,
+    backend=backend_url,
     include=[
         'app.workers.tasks.outreach_tasks',
         'app.workers.tasks.audit_tasks',
@@ -20,6 +47,8 @@ celery_app = Celery(
 
 # Configuration
 celery_app.conf.update(
+    task_always_eager=task_always_eager,
+    task_eager_propagates=task_eager_propagates,
     task_serializer='json',
     accept_content=['json'],
     result_serializer='json',

@@ -6,8 +6,86 @@ import json
 from user_agents import parse
 import uuid
 
+import logging
+import threading
+
+logger = logging.getLogger(__name__)
+
+class FallbackRedis:
+    def __init__(self, redis_url: str):
+        self.enabled = False
+        self.client = None
+        self.lock = threading.Lock()
+        self.memory = {}
+        
+        try:
+            if redis_url and not redis_url.startswith("memory://"):
+                self.client = redis.Redis.from_url(redis_url, decode_responses=True)
+                self.client.ping()
+                self.enabled = True
+                logger.info("Connected to Redis successfully.")
+            else:
+                logger.warning("REDIS_URL is empty or memory://. Using in-memory fallback for Redis.")
+        except Exception as e:
+            logger.warning(f"Could not connect to Redis at {redis_url}: {e}. Falling back to in-memory dictionary storage.")
+
+    def setex(self, key: str, time: int, value: str):
+        if self.enabled and self.client:
+            try:
+                return self.client.setex(key, time, value)
+            except Exception as e:
+                logger.warning(f"Redis setex failed: {e}. Falling back to in-memory.")
+                
+        with self.lock:
+            self.memory[key] = value
+        return True
+
+    def get(self, key: str):
+        if self.enabled and self.client:
+            try:
+                return self.client.get(key)
+            except Exception as e:
+                logger.warning(f"Redis get failed: {e}. Falling back to in-memory.")
+                
+        with self.lock:
+            return self.memory.get(key)
+
+    def delete(self, *names):
+        if self.enabled and self.client:
+            try:
+                return self.client.delete(*names)
+            except Exception as e:
+                logger.warning(f"Redis delete failed: {e}. Falling back to in-memory.")
+                
+        count = 0
+        with self.lock:
+            for name in names:
+                if name in self.memory:
+                    self.memory.pop(name, None)
+                    count += 1
+        return count
+
+    def set(self, name: str, value: str, ex=None, px=None, nx=False, xx=False, keepttl=False):
+        if self.enabled and self.client:
+            try:
+                return self.client.set(name, value, ex=ex, px=px, nx=nx, xx=xx, keepttl=keepttl)
+            except Exception as e:
+                logger.warning(f"Redis set failed: {e}. Falling back to in-memory.")
+                
+        with self.lock:
+            self.memory[name] = value
+        return True
+
+    def expire(self, name: str, time: int):
+        if self.enabled and self.client:
+            try:
+                return self.client.expire(name, time)
+            except Exception as e:
+                logger.warning(f"Redis expire failed: {e}.")
+        return True
+
 # Initialize Redis client
-redis_client = redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
+redis_client = FallbackRedis(settings.REDIS_URL)
 
 class SessionService:
     def _check_db(self):

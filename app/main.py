@@ -75,14 +75,26 @@ def create_app():
     
     # Deriving rate limiter storage URI from REDIS_URL and routing to DB 1 to avoid key collision
     import re
+    import redis
     redis_url_limiter = settings.REDIS_URL
-    if redis_url_limiter:
+    
+    if redis_url_limiter and not redis_url_limiter.startswith("memory://"):
         if re.search(r'/\d+$', redis_url_limiter):
             redis_url_limiter = re.sub(r'/\d+$', '/1', redis_url_limiter)
         else:
             redis_url_limiter = redis_url_limiter.rstrip('/') + '/1'
+            
+        try:
+            # Test connection to Redis
+            test_client = redis.Redis.from_url(redis_url_limiter)
+            test_client.ping()
+            logger.info("Limiter: Connected to Redis successfully.")
+        except Exception as e:
+            logger.warning(f"Limiter: Could not connect to Redis at {redis_url_limiter}: {e}. Falling back to in-memory rate limiting.")
+            redis_url_limiter = "memory://"
     else:
-        redis_url_limiter = "redis://localhost:6379/1"
+        logger.warning("Limiter: No REDIS_URL configured or set to memory://. Falling back to in-memory rate limiting.")
+        redis_url_limiter = "memory://"
 
     limiter = Limiter(
         get_remote_address,
