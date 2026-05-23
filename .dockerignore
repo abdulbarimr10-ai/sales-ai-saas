@@ -7,7 +7,6 @@ __pycache__
 dist
 build
 .cache
-models
 datasets
 *.log
 node_modules
