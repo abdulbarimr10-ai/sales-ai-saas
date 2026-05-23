@@ -25,6 +25,9 @@ def create_app():
         SECRET_KEY=settings.SECRET_KEY,
         ENV=settings.ENV,
         DEBUG=settings.DEBUG,
+        SESSION_COOKIE_SECURE=settings.SESSION_COOKIE_SECURE,
+        SESSION_COOKIE_HTTPONLY=settings.SESSION_COOKIE_HTTPONLY,
+        SESSION_COOKIE_SAMESITE=settings.SESSION_COOKIE_SAMESITE,
     )
 
     # 4. Setup CORS (Cross-Origin Resource Sharing)

@@ -27,9 +27,9 @@ class Settings(BaseSettings):
     REDIS_URL: str = Field("redis://localhost:6379/0", validation_alias="REDIS_URL")
 
     # Session settings
-    SESSION_COOKIE_SECURE: Optional[bool] = Field(None, validation_alias="SESSION_COOKIE_SECURE")
+    SESSION_COOKIE_SECURE: bool = Field(True, validation_alias="SESSION_COOKIE_SECURE")
     SESSION_COOKIE_HTTPONLY: bool = Field(True, validation_alias="SESSION_COOKIE_HTTPONLY")
-    SESSION_COOKIE_SAMESITE: str = Field("Lax", validation_alias="SESSION_COOKIE_SAMESITE")
+    SESSION_COOKIE_SAMESITE: str = Field("None", validation_alias="SESSION_COOKIE_SAMESITE")
 
     @property
     def cors_origins(self) -> list[str]:
@@ -48,6 +48,8 @@ class Settings(BaseSettings):
                 raise ValueError("SUPABASE_SERVICE_ROLE_KEY (SUPABASE_KEY) must be configured in production.")
             if not self.ENCRYPTION_KEY or self.ENCRYPTION_KEY == "WkXQn9u0Tz_F6Jb8KxY1r5sLp3o7m4I_2BcHf_T9uD4=":
                 raise ValueError("ENCRYPTION_KEY must be set to a secure, custom key in production.")
+            if not self.FRONTEND_URL or "*" in self.FRONTEND_URL:
+                raise ValueError("FRONTEND_URL must be set to a specific origin (not wildcard '*') in production.")
         return self
 
     class Config:

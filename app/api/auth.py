@@ -15,9 +15,12 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
 # Secure cookie settings
 COOKIE_NAME = "session_id"
-COOKIE_SECURE = settings.SESSION_COOKIE_SECURE if settings.SESSION_COOKIE_SECURE is not None else (settings.ENV == "production")
-COOKIE_HTTPONLY = settings.SESSION_COOKIE_HTTPONLY
 COOKIE_SAMESITE = settings.SESSION_COOKIE_SAMESITE
+if COOKIE_SAMESITE and COOKIE_SAMESITE.lower() == "none":
+    COOKIE_SECURE = True
+else:
+    COOKIE_SECURE = settings.SESSION_COOKIE_SECURE if settings.SESSION_COOKIE_SECURE is not None else (settings.ENV == "production")
+COOKIE_HTTPONLY = settings.SESSION_COOKIE_HTTPONLY
 
 def require_auth(f):
     @functools.wraps(f)
