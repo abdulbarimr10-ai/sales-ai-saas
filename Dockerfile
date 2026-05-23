@@ -23,4 +23,4 @@ ENV PYTHONUNBUFFERED=1
 
 # Run the Flask server using gunicorn for production
 # We use run:app to run the complete Flask application factory
-CMD ["sh", "-c", "gunicorn -w 4 --timeout 120 -b 0.0.0.0:${PORT:-5000} run:app"]
+CMD ["sh", "-c", "gunicorn -w 1 --timeout 120 -b 0.0.0.0:${PORT:-5000} run:app"]

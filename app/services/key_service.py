@@ -1,6 +1,3 @@
-import openai
-import anthropic
-import google.generativeai as genai
 from app.core.security import encrypt_data, decrypt_data
 from app.repositories.api_key_repository import api_key_repository
 
@@ -9,10 +6,12 @@ class KeyService:
         """Pings the provider to check if the key is valid."""
         try:
             if provider == 'openai':
+                import openai
                 client = openai.OpenAI(api_key=api_key)
                 client.models.list()
                 return True
             elif provider == 'claude':
+                import anthropic
                 client = anthropic.Anthropic(api_key=api_key)
                 # Claude doesn't have a simple ping, so we try a tiny completion or list models
                 # List models is available in newer anthropic versions, or we can just assume valid if it doesn't immediately throw on init
@@ -24,6 +23,7 @@ class KeyService:
                 )
                 return True
             elif provider == 'gemini':
+                import google.generativeai as genai
                 genai.configure(api_key=api_key)
                 # Simple list models to verify
                 list(genai.list_models())

@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     @model_validator(mode='after')
     def validate_production_secrets(self) -> 'Settings':
         if self.ENV == 'production':
+            self.DEBUG = False
             if self.SECRET_KEY == "fallback-dev-secret-key-12345":
                 raise ValueError("SECRET_KEY must be changed from the fallback in production.")
             if not self.SUPABASE_URL:

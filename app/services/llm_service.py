@@ -1,7 +1,3 @@
-import ollama
-import openai
-import anthropic
-import google.generativeai as genai
 from app.services.key_service import key_service
 from app.core.logging import logger
 import database.queries as db
@@ -25,6 +21,7 @@ class LLMService:
 
         try:
             if provider == 'openai':
+                import openai
                 key = self.get_user_provider_key(user_id, 'openai')
                 if not key:
                     raise ValueError("OpenAI key missing or invalid")
@@ -40,6 +37,7 @@ class LLMService:
                 del client
 
             elif provider == 'claude':
+                import anthropic
                 key = self.get_user_provider_key(user_id, 'claude')
                 if not key:
                     raise ValueError("Claude key missing or invalid")
@@ -55,6 +53,7 @@ class LLMService:
                 del client
 
             elif provider == 'gemini':
+                import google.generativeai as genai
                 key = self.get_user_provider_key(user_id, 'gemini')
                 if not key:
                     raise ValueError("Gemini key missing or invalid")
@@ -67,6 +66,7 @@ class LLMService:
                 
             else:
                 # Local Ollama fallback
+                import ollama
                 response = ollama.generate(model='mistral', prompt=prompt)
                 raw_text = response['response'].strip()
 

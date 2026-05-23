@@ -78,11 +78,8 @@ def get_google_flow():
     flow.redirect_uri = REDIRECT_URI
     return flow
 
-init_db()
-
-app = Flask(__name__)
-CORS(app, supports_credentials=True)
-app.secret_key = os.getenv("SECRET_KEY")
+# init_db() call and secondary Flask app instantiation removed to optimize memory footprint.
+# The legacy routes only require legacy_bp.
 
 @legacy_bp.route('/')
 def home():
@@ -395,4 +392,4 @@ def export_excel():
         return send_file(file_path, as_attachment=True, download_name=f"leads_export_{date_str}.xlsx")
     return jsonify({"status": "error", "message": "Excel file not found"}), 404
 
-app.register_blueprint(legacy_bp)
+# Blueprint registration is handled by app/main.py when importing legacy_bp
